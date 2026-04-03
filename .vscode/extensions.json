@@ -1,0 +1,11 @@
+{
+  "recommendations": [
+    "ms-vscode.vscode-typescript-next",
+    "bradlc.vscode-tailwindcss",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "qwtel.sqlite-viewer",
+    "ms-azuretools.vscode-docker",
+    "anthropics.claude-code"
+  ]
+}

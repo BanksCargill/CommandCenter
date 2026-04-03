@@ -1,0 +1,11 @@
+services:
+  app:
+    build: .
+    ports:
+      # Change the host port (left side) if running alongside npm run dev on 3000
+      # e.g. "3001:3000" to access the container at http://localhost:3001
+      - "3000:3000"
+    volumes:
+      # Persist the SQLite database outside the container
+      - ./db:/app/db
+    restart: unless-stopped

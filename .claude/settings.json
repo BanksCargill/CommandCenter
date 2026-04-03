@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"c:/Repositories/testing/ClaudeProjects/CommandCenter/command-center\" && npm run lint 2>&1 | tail -20",
+            "timeout": 60,
+            "statusMessage": "Running lint check..."
+          }
+        ]
+      }
+    ]
+  }
+}
