@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { feedSources } from "@/db/schema";
 
@@ -21,5 +22,6 @@ export async function POST(request: NextRequest) {
     .returning()
     .get();
 
+  revalidatePath("/");
   return NextResponse.json(result, { status: 201 });
 }

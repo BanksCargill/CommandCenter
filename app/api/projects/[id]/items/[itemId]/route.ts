@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { projectItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -41,6 +42,7 @@ export async function PATCH(
     .returning()
     .get();
 
+  revalidatePath("/projects");
   return NextResponse.json(updated);
 }
 
@@ -50,5 +52,6 @@ export async function DELETE(
 ) {
   const { itemId } = await params;
   db.delete(projectItems).where(eq(projectItems.id, parseInt(itemId))).run();
+  revalidatePath("/projects");
   return NextResponse.json({ success: true });
 }

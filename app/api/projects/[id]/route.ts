@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { projects, projectItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -23,6 +24,7 @@ export async function PATCH(
     .get();
 
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  revalidatePath("/projects");
   return NextResponse.json(updated);
 }
 
@@ -36,6 +38,6 @@ export async function DELETE(
   // Cascade delete items first (SQLite FK enforcement may be off)
   db.delete(projectItems).where(eq(projectItems.projectId, projectId)).run();
   db.delete(projects).where(eq(projects.id, projectId)).run();
-
+  revalidatePath("/projects");
   return NextResponse.json({ ok: true });
 }

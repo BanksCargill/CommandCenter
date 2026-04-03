@@ -3,7 +3,9 @@ import { projects, projectItems } from "@/db/schema";
 import { asc, count } from "drizzle-orm";
 import ProjectsLanding from "@/app/components/ProjectsLanding";
 
-export const dynamic = "force-dynamic";
+// No force-dynamic — page is statically cached and revalidated via revalidatePath
+// after any project or item mutation. See app/api/projects/** routes.
+export const revalidate = false;
 
 export default function ProjectsPage() {
   const allProjects = db

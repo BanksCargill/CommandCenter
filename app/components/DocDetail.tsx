@@ -2,12 +2,18 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { ArrowLeft, Edit2, Loader2, Pin, Save, Trash2, Upload, X } from "lucide-react";
-import MermaidBlock from "@/app/components/MermaidBlock";
+
+// Heavy libraries — deferred until a doc is actually opened
+const MermaidBlock = dynamic(() => import("@/app/components/MermaidBlock"), { ssr: false });
+const SyntaxHighlighter = dynamic(
+  () => import("react-syntax-highlighter").then((m) => ({ default: m.Prism })),
+  { ssr: false, loading: () => <div className="bg-gray-900 rounded-lg p-4 text-gray-600 text-xs animate-pulse">Loading…</div> }
+);
 import type { Doc } from "@/db/schema";
 
 type DocWithProject = Doc & { projectName: string | null };

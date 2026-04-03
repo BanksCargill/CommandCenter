@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { ExternalLink, Layers } from "lucide-react";
 import type { FeedSource, NewsItem } from "@/db/schema";
 
@@ -57,11 +57,16 @@ export default function NewsFeed({ initialItems, sources, digestSize = 5, digest
     setVisibleCount(PAGE_SIZE);
   }
 
-  const sourceFiltered = selectedSource
-    ? initialItems.filter((i) => i.feedSourceId === selectedSource)
-    : initialItems;
+  const sourceFiltered = useMemo(
+    () => selectedSource ? initialItems.filter((i) => i.feedSourceId === selectedSource) : initialItems,
+    [initialItems, selectedSource]
+  );
 
-  const all = digest ? applyDigest(sourceFiltered, digestSize) : sourceFiltered;
+  const all = useMemo(
+    () => digest ? applyDigest(sourceFiltered, digestSize) : sourceFiltered,
+    [sourceFiltered, digest, digestSize]
+  );
+
   const displayed = all.slice(0, visibleCount);
 
   return (

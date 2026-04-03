@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { docs } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -34,6 +35,7 @@ export async function PATCH(
 
   if (!updated) return NextResponse.json({ error: "Not found" }, { status: 404 });
   writeDocFile(updated.id, updated.title, updated.content);
+  revalidatePath("/docs");
   return NextResponse.json(updated);
 }
 
@@ -45,5 +47,6 @@ export async function DELETE(
   const docId = parseInt(id);
   db.delete(docs).where(eq(docs.id, docId)).run();
   deleteDocFile(docId);
+  revalidatePath("/docs");
   return NextResponse.json({ ok: true });
 }

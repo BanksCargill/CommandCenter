@@ -7,6 +7,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   digest_size: "5",
   digest_default_on: "true",
   retention_days: "30",
+  news_feed_limit: "100",
 };
 
 export function getSetting(key: string): string {

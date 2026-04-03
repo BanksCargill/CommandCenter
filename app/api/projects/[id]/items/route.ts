@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { projectItems } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
@@ -50,5 +51,6 @@ export async function POST(
     })
     .returning()
     .get();
+  revalidatePath("/projects");
   return NextResponse.json(created, { status: 201 });
 }

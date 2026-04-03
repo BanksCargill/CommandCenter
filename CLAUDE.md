@@ -36,7 +36,7 @@ After completing any non-trivial work, Claude must:
 
 5. **Do not create a new project per module.** "Command Center" is the single app roadmap. Module-specific projects are only justified when a module has 10+ active granular tasks — and should be archived once that module stabilizes.
 
-6. **Flag extractable patterns.** During any session, if you observe something that would benefit from extraction — tell the user before closing out:
+6. **Flag extractable patterns — proactively, during work, not just at the end.** If you notice a candidate while implementing something, call it out in your response at that moment so the user can decide immediately. Don't batch these up for a closing summary.
    - A repeated action or workflow → suggest a **skill** (`.claude/commands/[name].md`)
    - A persistent fact, rule, or preference → suggest a **memory file** (`memory/[name].md`)
    - An automated action tied to a Claude event → suggest a **hook** (settings.json `hooks`)
@@ -168,12 +168,36 @@ import type { Doc, FeedSource, NewsItem, Project, ProjectItem, Setting } from "@
 
 ## Conventions
 
-- **`export const dynamic = "force-dynamic"`** on all server page.tsx files — ensures every request re-queries the DB (this app has no stale-data tolerance)
+- **`export const dynamic = "force-dynamic"`** — only use this on pages where data can change between requests WITHOUT a user mutation: the News Feed (cron writes), and any detail page that reads the filesystem (docs `[id]`). Do NOT apply it globally.
+- **`export const revalidate = false`** — use on list pages (projects, docs) that only change via user mutations. Caches the page indefinitely; combined with `revalidatePath` in API routes this gives instant re-navigation after the first load.
+- **`revalidatePath(path)`** — must be called in every API route handler that mutates data shown on a cached page. Import from `next/cache`. Place it immediately before the final `return`. Forgetting this causes stale data after mutations.
 - **Tailwind dark theme:** bg-gray-950 (background), bg-gray-900 (elevated), border-gray-800 (dividers), text-emerald-400 (active/accent), text-amber-400 (warning/todo)
 - **Optimistic updates:** client updates `useState` immediately, then reconciles with API response
 - **API error responses:** `{ error: "message" }` with appropriate status code
 - **Sidebar enable/disable:** set `active: true/false` in the `modules` array in `app/components/Sidebar.tsx`
 - **Lint before Docker:** `npm run lint` must pass before `docker compose up --build` will succeed (ESLint errors = build failure). After any code edits, Claude must run `npm run lint` and fix all errors — not just warnings — before closing out. Common culprits: unused imports, `let` where `const` suffices.
+
+---
+
+## Performance Conventions
+
+### Every new module must include a `loading.tsx`
+Place `app/[module]/loading.tsx` (and `app/[module]/[id]/loading.tsx` for detail routes) alongside the page. Next.js shows it instantly on navigation while the server component renders. Use `animate-pulse` skeleton divs that approximate the page layout. No client imports needed — these are pure server components.
+
+### List queries must not select large columns
+Server pages that power list views (e.g. docs list) must select only the columns the list UI renders. Never use `...getTableColumns(table)` on a page that doesn't need every column — `content` columns can be large. Pass a narrower type to the client component and define it explicitly with the needed fields (not as `Omit<FullType, "content">` — write the type out so it's clear and stable).
+
+### Lazy-load heavy rendering libraries
+`MermaidBlock` and `react-syntax-highlighter` are large. Import them via `next/dynamic` in any component that uses them, so they're only bundled when that component is actually rendered. Template:
+```tsx
+import dynamic from "next/dynamic";
+const MermaidBlock = dynamic(() => import("@/app/components/MermaidBlock"), { ssr: false });
+const SyntaxHighlighter = dynamic(
+  () => import("react-syntax-highlighter").then((m) => ({ default: m.Prism })),
+  { ssr: false, loading: () => <div className="animate-pulse bg-gray-900 rounded-lg p-4 h-16" /> }
+);
+```
+The `vscDarkPlus` theme object can stay as a static import (it's a plain JS object, not the rendering engine).
 
 ---
 
@@ -209,7 +233,7 @@ setSetting("last_fetched_at", iso)   // upserts
 getAllSettings()                     // → Record<string, string> merged with defaults
 ```
 
-Current settings keys: `fetch_interval_hours`, `digest_size`, `digest_default_on`, `retention_days`, `last_fetched_at`
+Current settings keys: `fetch_interval_hours`, `digest_size`, `digest_default_on`, `retention_days`, `last_fetched_at`, `news_feed_limit`
 
 ---
 
@@ -230,7 +254,11 @@ Current job (every hour):
 1. **Schema:** Add table to `db/schema.ts`, export inferred types
 2. **Migrate:** `npx drizzle-kit generate && npx drizzle-kit migrate`
 3. **API routes:** `app/api/[module]/route.ts` (GET + POST), `[id]/route.ts` (PATCH + DELETE)
+   - Add `revalidatePath("/[module]")` in every handler that writes to the DB (POST, PATCH, DELETE)
+   - Import `revalidatePath` from `next/cache`
 4. **Server page:** `app/[module]/page.tsx` — query DB, pass to client component
+   - Use `export const revalidate = false` (not `force-dynamic`) unless the page changes from background jobs or filesystem reads
+   - Select only the columns the list view actually renders — never `...getTableColumns(table)` on a list page
 5. **Client component:** `app/components/[Module]Landing.tsx` — `"use client"`, useState, fetch mutations
 6. **Enable:** Add to `modules` array in `app/components/Sidebar.tsx` with `active: true`
 

@@ -28,6 +28,7 @@ export async function register() {
       }
       if (imported > 0) console.log(`[docs] Imported ${imported} new doc(s) from docs/`);
     }
+
     const { lt } = await import("drizzle-orm");
 
     // Run every hour; respect the fetch_interval_hours setting dynamically

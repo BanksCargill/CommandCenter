@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Loader2, Pin, Plus, Search, X } from "lucide-react";
-import type { Doc } from "@/db/schema";
-
-type DocWithProject = Doc & { projectName: string | null };
+// content is excluded from the list query — only fetched in the detail view
+type DocListItem = {
+  id: number;
+  title: string;
+  tags: string;
+  projectId: number | null;
+  pinned: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  projectName: string | null;
+};
 type ProjectRef = { id: number; name: string };
 
 interface Props {
-  docs: DocWithProject[];
+  docs: DocListItem[];
   projects: ProjectRef[];
 }
 
@@ -23,12 +31,12 @@ export default function DocsLanding({ docs: initial, projects }: Props) {
   const [newProjectId, setNewProjectId] = useState<number | "">("");
   const [saving, setSaving] = useState(false);
 
-  const filtered = docs.filter((doc) => {
+  const filtered = useMemo(() => docs.filter((doc) => {
     const q = search.toLowerCase();
     const matchesSearch = !q || doc.title.toLowerCase().includes(q) || doc.tags.toLowerCase().includes(q);
     const matchesProject = projectFilter === "" || doc.projectId === projectFilter;
     return matchesSearch && matchesProject;
-  });
+  }), [docs, search, projectFilter]);
 
   async function handleCreate() {
     if (!newTitle.trim()) return;
@@ -38,7 +46,7 @@ export default function DocsLanding({ docs: initial, projects }: Props) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: newTitle.trim(), projectId: newProjectId || null }),
     });
-    const created: DocWithProject = await res.json();
+    const created: DocListItem = await res.json();
     setDocs((prev) => [created, ...prev]);
     setNewTitle("");
     setNewProjectId("");
@@ -47,8 +55,8 @@ export default function DocsLanding({ docs: initial, projects }: Props) {
     router.push(`/docs/${created.id}`);
   }
 
-  async function handlePin(doc: DocWithProject) {
-    const updated: DocWithProject = await fetch(`/api/docs/${doc.id}`, {
+  async function handlePin(doc: DocListItem) {
+    const updated: DocListItem = await fetch(`/api/docs/${doc.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ pinned: !doc.pinned }),

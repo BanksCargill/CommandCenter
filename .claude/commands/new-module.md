@@ -21,18 +21,32 @@ Run: `npx drizzle-kit generate && npx drizzle-kit migrate`
 **Step 3 — API routes**
 Create `app/api/[module]/route.ts` (GET list + POST create).
 Create `app/api/[module]/[id]/route.ts` (PATCH + DELETE) if the module has individual records.
+- Import `revalidatePath` from `next/cache` in every route file that has write handlers
+- Call `revalidatePath("/[module]")` in every POST, PATCH, and DELETE handler, immediately before the final `return`
+- Do NOT add it to GET handlers
 
 **Step 4 — Server page**
 Create `app/[module]/page.tsx`:
-- Add `export const dynamic = "force-dynamic"` at the top
+- Add `export const revalidate = false` at the top (NOT `force-dynamic` — that disables prefetching and caching)
+- Only use `force-dynamic` if the page data can change without a user mutation (e.g. background cron jobs, filesystem reads)
+- Select only the columns the list view renders — never `...getTableColumns(table)`
 - Query the DB using the singleton from `lib/db.ts`
 - Pass initialData to the client component as props
+
+**Step 4b — Register startup revalidation**
+In `app/api/startup-revalidate/route.ts`, add `revalidatePath("/[module]")` to the POST handler. This ensures a fresh Docker deploy never serves stale build-time seed data on first visit — the entrypoint calls this endpoint once the server is up.
 
 **Step 5 — Client component**
 Create `app/components/[Module]Landing.tsx`:
 - `"use client"` at the top
 - Accept initialData as props, store in useState
 - All mutations call fetch() to API routes and update local state with the response
+
+**Step 5b — Loading skeletons**
+Create `app/[module]/loading.tsx` (and `app/[module]/[id]/loading.tsx` if there's a detail route).
+- No `"use client"` needed — these are plain server components
+- Use `animate-pulse` skeleton divs that approximate the real layout
+- This is required: without it, navigating to the module shows a blank screen until SSR finishes
 
 **Step 6 — Enable in sidebar**
 Add an entry to the `modules` array in `app/components/Sidebar.tsx` with `active: true`.

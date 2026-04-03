@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { docs } from "@/db/schema";
 import { desc, like } from "drizzle-orm";
@@ -28,6 +29,6 @@ export async function POST(request: NextRequest) {
     .get();
 
   writeDocFile(created.id, created.title, created.content);
-
+  revalidatePath("/docs");
   return NextResponse.json(created, { status: 201 });
 }

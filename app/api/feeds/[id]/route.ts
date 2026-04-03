@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { feedSources, newsItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -22,6 +23,7 @@ export async function PATCH(
     .returning()
     .get();
 
+  revalidatePath("/");
   return NextResponse.json(updated);
 }
 
@@ -35,5 +37,6 @@ export async function DELETE(
   db.delete(newsItems).where(eq(newsItems.feedSourceId, numId)).run();
   db.delete(feedSources).where(eq(feedSources.id, numId)).run();
 
+  revalidatePath("/");
   return NextResponse.json({ success: true });
 }
