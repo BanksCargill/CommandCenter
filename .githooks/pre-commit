@@ -1,0 +1,7 @@
+#!/bin/sh
+# Auto-checkpoint WAL before every commit so the .db file is always complete.
+if [ -f "db/command-center.db" ]; then
+  echo "[pre-commit] Checkpointing WAL..."
+  npx tsx scripts/checkpoint-db.ts
+  git add db/command-center.db db/command-center.db-wal db/command-center.db-shm 2>/dev/null || true
+fi

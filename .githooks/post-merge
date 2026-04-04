@@ -1,0 +1,5 @@
+#!/bin/sh
+# Auto-apply pending DB migrations after git pull / merge.
+echo "[post-merge] Applying pending DB migrations..."
+npx drizzle-kit migrate
+echo "[post-merge] Done."
