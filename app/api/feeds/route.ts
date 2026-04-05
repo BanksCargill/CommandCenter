@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { feedSources } from "@/db/schema";
+import { validateFeedUrl } from "@/lib/url-validator";
 
 export async function GET() {
   const sources = db.select().from(feedSources).all();
@@ -14,6 +15,11 @@ export async function POST(request: NextRequest) {
 
   if (!name || !url) {
     return NextResponse.json({ error: "name and url are required" }, { status: 400 });
+  }
+
+  const urlCheck = validateFeedUrl(url);
+  if (!urlCheck.valid) {
+    return NextResponse.json({ error: urlCheck.error }, { status: 400 });
   }
 
   const result = db

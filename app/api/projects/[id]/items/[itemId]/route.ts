@@ -3,15 +3,18 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { projectItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { parseId } from "@/lib/url-validator";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   const { itemId } = await params;
+  const itemIdNum = parseId(itemId);
+  if (!itemIdNum) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const body = await request.json();
 
-  const existing = db.select().from(projectItems).where(eq(projectItems.id, parseInt(itemId))).get();
+  const existing = db.select().from(projectItems).where(eq(projectItems.id, itemIdNum)).get();
   if (!existing) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const now = new Date();
@@ -38,7 +41,7 @@ export async function PATCH(
       ...(completedAt !== undefined && { completedAt }),
       updatedAt: now,
     })
-    .where(eq(projectItems.id, parseInt(itemId)))
+    .where(eq(projectItems.id, itemIdNum))
     .returning()
     .get();
 
@@ -51,7 +54,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; itemId: string }> }
 ) {
   const { itemId } = await params;
-  db.delete(projectItems).where(eq(projectItems.id, parseInt(itemId))).run();
+  const itemIdNum = parseId(itemId);
+  if (!itemIdNum) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+  db.delete(projectItems).where(eq(projectItems.id, itemIdNum)).run();
   revalidatePath("/projects");
   return NextResponse.json({ success: true });
 }

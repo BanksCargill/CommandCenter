@@ -5,3 +5,29 @@ if [ -f "db/command-center.db" ]; then
   npx tsx scripts/checkpoint-db.ts
   git add db/command-center.db db/command-center.db-wal db/command-center.db-shm 2>/dev/null || true
 fi
+
+# Audit npm dependencies.
+# BLOCKS on critical vulnerabilities (must be fixed before committing).
+# WARNS on high vulnerabilities (investigate; some may be accepted/mitigated).
+echo "[pre-commit] Running npm audit..."
+npm audit --json 2>/dev/null | node -e "
+const chunks = [];
+process.stdin.on('data', d => chunks.push(d));
+process.stdin.on('end', () => {
+  try {
+    const report = JSON.parse(Buffer.concat(chunks).toString());
+    const v = (report.metadata || {}).vulnerabilities || {};
+    const high = v.high || 0;
+    const critical = v.critical || 0;
+    if (high > 0) {
+      console.warn('[pre-commit] WARNING: ' + high + ' high-severity npm vulnerabilities. Run npm audit to review.');
+    }
+    if (critical > 0) {
+      console.error('[pre-commit] BLOCKED: ' + critical + ' critical npm vulnerabilities. Run npm audit to fix before committing.');
+      process.exit(1);
+    }
+  } catch (_) {
+    // If parsing fails, allow the commit (don't block on tooling issues)
+  }
+});
+" || exit 1

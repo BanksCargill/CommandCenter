@@ -4,14 +4,22 @@ import { db } from "@/lib/db";
 import { docs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { writeDocFile, deleteDocFile } from "@/lib/doc-files";
+import { parseId } from "@/lib/url-validator";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const docId = parseInt(id);
-  const body = await request.json() as Partial<{
+  const docId = parseId(id);
+  if (!docId) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+
+  const MAX_DOC_BYTES = 5 * 1024 * 1024;
+  const raw = await request.text();
+  if (raw.length > MAX_DOC_BYTES) {
+    return NextResponse.json({ error: "Request body too large (max 5 MB)" }, { status: 413 });
+  }
+  const body = JSON.parse(raw) as Partial<{
     title: string;
     content: string;
     tags: string;
@@ -44,7 +52,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const docId = parseInt(id);
+  const docId = parseId(id);
+  if (!docId) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   db.delete(docs).where(eq(docs.id, docId)).run();
   deleteDocFile(docId);
   revalidatePath("/docs");

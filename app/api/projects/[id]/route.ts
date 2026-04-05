@@ -3,13 +3,15 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { projects, projectItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { parseId } from "@/lib/url-validator";
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const projectId = parseInt(id);
+  const projectId = parseId(id);
+  if (!projectId) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const body = await request.json() as Partial<{ name: string; description: string; archived: boolean }>;
 
   const updated = db
@@ -33,7 +35,8 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const projectId = parseInt(id);
+  const projectId = parseId(id);
+  if (!projectId) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
 
   // Cascade delete items first (SQLite FK enforcement may be off)
   db.delete(projectItems).where(eq(projectItems.projectId, projectId)).run();

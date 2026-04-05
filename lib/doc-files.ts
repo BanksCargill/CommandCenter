@@ -16,13 +16,22 @@ function slugify(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
+/** Resolve a path and assert it stays inside DOCS_DIR. Throws if traversal is attempted. */
+function safeDocsPath(...segments: string[]): string {
+  const resolved = path.resolve(DOCS_DIR, ...segments);
+  if (!resolved.startsWith(path.resolve(DOCS_DIR) + path.sep) && resolved !== path.resolve(DOCS_DIR)) {
+    throw new Error(`[doc-files] Path traversal attempt blocked: ${resolved}`);
+  }
+  return resolved;
+}
+
 /** Remove any existing file for this id (handles slug/title changes) */
 function removeStaleFile(id: number, currentTitle: string): void {
   if (!fs.existsSync(DOCS_DIR)) return;
   const targetSlug = `${id}-${slugify(currentTitle)}.md`;
   for (const f of fs.readdirSync(DOCS_DIR)) {
     if (f.startsWith(`${id}-`) && f.endsWith(".md") && f !== targetSlug) {
-      fs.unlinkSync(path.join(DOCS_DIR, f));
+      fs.unlinkSync(safeDocsPath(f));
     }
   }
 }
@@ -31,10 +40,10 @@ export function writeDocFile(id: number, title: string, content: string): void {
   try {
     fs.mkdirSync(DOCS_DIR, { recursive: true });
     removeStaleFile(id, title);
-    const filePath = path.join(DOCS_DIR, `${id}-${slugify(title)}.md`);
+    const filePath = safeDocsPath(`${id}-${slugify(title)}.md`);
     fs.writeFileSync(filePath, content, "utf8");
-  } catch {
-    // File write failures should not break the API response
+  } catch (err) {
+    console.error("[doc-files] writeDocFile failed:", err);
   }
 }
 
@@ -57,7 +66,8 @@ export function syncFromFileIfNewer(
     const content = fs.readFileSync(filePath, "utf8");
     updateFn(content);
     return content;
-  } catch {
+  } catch (err) {
+    console.error("[doc-files] syncFromFileIfNewer failed:", err);
     return null;
   }
 }
@@ -67,10 +77,10 @@ export function deleteDocFile(id: number): void {
     if (!fs.existsSync(DOCS_DIR)) return;
     for (const f of fs.readdirSync(DOCS_DIR)) {
       if (f.startsWith(`${id}-`) && f.endsWith(".md")) {
-        fs.unlinkSync(path.join(DOCS_DIR, f));
+        fs.unlinkSync(safeDocsPath(f));
       }
     }
-  } catch {
-    // ignore
+  } catch (err) {
+    console.error("[doc-files] deleteDocFile failed:", err);
   }
 }

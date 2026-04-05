@@ -3,16 +3,19 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { projectItems } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
+import { parseId } from "@/lib/url-validator";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const projectId = parseId(id);
+  if (!projectId) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const items = db
     .select()
     .from(projectItems)
-    .where(eq(projectItems.projectId, parseInt(id)))
+    .where(eq(projectItems.projectId, projectId))
     .orderBy(asc(projectItems.sortOrder), asc(projectItems.createdAt))
     .all();
   return NextResponse.json(items);
@@ -23,6 +26,8 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const projectId = parseId(id);
+  if (!projectId) return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
   const { title, notes, status, tags } = await request.json();
   if (!title) return NextResponse.json({ error: "title is required" }, { status: 400 });
 
@@ -30,7 +35,7 @@ export async function POST(
   const existing = db
     .select()
     .from(projectItems)
-    .where(eq(projectItems.projectId, parseInt(id)))
+    .where(eq(projectItems.projectId, projectId))
     .all();
   const sortOrder = existing.length;
 
@@ -39,7 +44,7 @@ export async function POST(
   const created = db
     .insert(projectItems)
     .values({
-      projectId: parseInt(id),
+      projectId,
       title,
       notes: notes ?? null,
       status: resolvedStatus,

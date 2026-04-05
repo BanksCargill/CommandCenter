@@ -24,8 +24,17 @@ function slugify(title: string): string {
     .replace(/^-|-$/g, "");
 }
 
+function safeDocsPath(...segments: string[]): string {
+  const resolved = path.resolve(DOCS_DIR, ...segments);
+  const base = path.resolve(DOCS_DIR);
+  if (!resolved.startsWith(base + path.sep) && resolved !== base) {
+    throw new Error(`Path traversal attempt blocked: ${resolved}`);
+  }
+  return resolved;
+}
+
 function docFilePath(id: number, title: string): string {
-  return path.join(DOCS_DIR, `${id}-${slugify(title)}.md`);
+  return safeDocsPath(`${id}-${slugify(title)}.md`);
 }
 
 /** Write a doc's content to docs/<id>-<slug>.md */
@@ -41,7 +50,7 @@ function findDocFile(id: number): string | null {
   if (!fs.existsSync(DOCS_DIR)) return null;
   const prefix = `${id}-`;
   const match = fs.readdirSync(DOCS_DIR).find((f) => f.startsWith(prefix) && f.endsWith(".md"));
-  return match ? path.join(DOCS_DIR, match) : null;
+  return match ? safeDocsPath(match) : null;
 }
 
 /** Translate glob pattern (* = any chars) to SQL LIKE pattern (% = any chars) */

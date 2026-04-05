@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { ExternalLink, Layers } from "lucide-react";
 import type { FeedSource, NewsItem } from "@/db/schema";
+import { safeHref } from "@/lib/url-validator";
 
 function formatScore(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
@@ -125,7 +126,7 @@ export default function NewsFeed({ initialItems, sources, digestSize = 5, digest
             <article key={item.id} className="px-5 py-4 hover:bg-gray-900/40 group">
               <div className="flex items-start justify-between gap-3">
                 <a
-                  href={item.url}
+                  href={safeHref(item.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-white font-medium leading-snug hover:text-emerald-300 transition-colors line-clamp-2"
@@ -133,7 +134,7 @@ export default function NewsFeed({ initialItems, sources, digestSize = 5, digest
                   {item.title}
                 </a>
                 <a
-                  href={item.url}
+                  href={safeHref(item.url)}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-600 hover:text-gray-300 shrink-0 mt-0.5"

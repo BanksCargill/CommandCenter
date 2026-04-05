@@ -52,8 +52,13 @@ function s(val: string | null): string {
 }
 
 function writeSeedFile(filePath: string, content: string): void {
-  fs.writeFileSync(filePath, content, "utf8");
-  const rel = path.relative(process.cwd(), filePath);
+  const cwd = path.resolve(process.cwd());
+  const resolved = path.resolve(filePath);
+  if (!resolved.startsWith(cwd + path.sep) && resolved !== cwd) {
+    throw new Error(`Path traversal attempt blocked: ${resolved}`);
+  }
+  fs.writeFileSync(resolved, content, "utf8");
+  const rel = path.relative(cwd, resolved);
   console.log("  Wrote " + rel);
 }
 

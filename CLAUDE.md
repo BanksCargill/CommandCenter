@@ -249,6 +249,32 @@ Current job (every hour):
 
 ---
 
+## Security Checklist
+
+Run through this checklist for **every new API route** and **every new client component that renders external data**. This checklist is also enforced by `/new-module`.
+
+### API routes
+- [ ] **ID params:** use `parseId(id)` from `lib/url-validator.ts`; return 400 if null
+- [ ] **User-supplied URLs:** call `validateFeedUrl(url)` from `lib/url-validator.ts` before storing; return 400 on failure
+- [ ] **Large content fields:** add a size check (e.g. `raw.length > 5 * 1024 * 1024`) and return 413
+- [ ] **Destructive endpoints** (DELETE, purge, refresh): confirm they are covered by `middleware.ts` localhost guard
+
+### Client components
+- [ ] **Links from external data:** wrap `href` with `safeHref(url)` from `lib/url-validator.ts` to block `javascript:` URIs
+- [ ] **Raw HTML injection** (e.g. `innerHTML`, Mermaid SVG): sanitize with `DOMPurify.sanitize()`
+- [ ] **User-uploaded files:** validate file type and size server-side, not just via HTML `accept`
+
+### Shared utilities
+- `lib/url-validator.ts` — `parseId`, `validateFeedUrl`, `safeHref`
+- `DOMPurify` — installed; import in any client component using `innerHTML`
+
+### Automated gates (already wired)
+- **Pre-commit hook** (`.githooks/pre-commit`): blocks commits with high/critical npm CVEs
+- **ESLint** (`eslint-plugin-security`): flags unsafe patterns at author time
+- **`middleware.ts`**: rejects non-local API requests in production
+
+---
+
 ## How to Add a New Module
 
 1. **Schema:** Add table to `db/schema.ts`, export inferred types

@@ -8,4 +8,8 @@ services:
     volumes:
       # Persist the SQLite database outside the container
       - ./db:/app/db
+    environment:
+      # Authenticates the startup cache-revalidation call in docker-entrypoint.sh.
+      # Must match the value in .env.local on the host.
+      - REVALIDATE_SECRET=${REVALIDATE_SECRET}
     restart: unless-stopped

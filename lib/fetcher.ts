@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { feedSources, newsItems } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { FeedSource } from "@/db/schema";
+import { safeHref } from "@/lib/url-validator";
+
+function isSafeUrl(url: string): boolean {
+  return safeHref(url) !== "#";
+}
 
 const UA = "Mozilla/5.0 (compatible; CommandCenter/1.0)";
 
@@ -38,7 +43,7 @@ async function fetchRSS(source: FeedSource): Promise<number> {
   let added = 0;
   for (const item of feed.items) {
     const url = item.link ?? item.guid;
-    if (!url || !item.title) continue;
+    if (!url || !item.title || !isSafeUrl(url)) continue;
     const ok = insertItem({
       feedSourceId: source.id,
       title: item.title,
@@ -63,7 +68,7 @@ async function fetchHNAlgolia(source: FeedSource): Promise<number> {
   for (const hit of data.hits) {
     const title = hit.title ?? hit.story_title;
     const url = hit.url ?? `https://news.ycombinator.com/item?id=${hit.objectID}`;
-    if (!title) continue;
+    if (!title || !isSafeUrl(url)) continue;
     const ok = insertItem({
       feedSourceId: source.id,
       title,
@@ -92,6 +97,7 @@ async function fetchReddit(source: FeedSource): Promise<number> {
     const url = post.is_self
       ? `https://www.reddit.com${post.permalink}`
       : post.url;
+    if (!isSafeUrl(url)) continue;
     const ok = insertItem({
       feedSourceId: source.id,
       title: post.title,
@@ -115,6 +121,7 @@ async function fetchDevTo(source: FeedSource): Promise<number> {
   }>;
   let added = 0;
   for (const article of articles) {
+    if (!isSafeUrl(article.url)) continue;
     const ok = insertItem({
       feedSourceId: source.id,
       title: article.title,
@@ -139,6 +146,7 @@ async function fetchLobsters(source: FeedSource): Promise<number> {
   let added = 0;
   for (const story of stories) {
     const url = story.url || `https://lobste.rs/s/${story.short_id}`;
+    if (!isSafeUrl(url)) continue;
     const ok = insertItem({
       feedSourceId: source.id,
       title: story.title,
@@ -171,14 +179,15 @@ export async function fetchAllFeeds(): Promise<number> {
 
   for (let i = 0; i < sources.length; i += CONCURRENCY) {
     const batch = sources.slice(i, i + CONCURRENCY);
-    const results = await Promise.allSettled(batch.map((s) => fetchFeed(s)));
-    for (let j = 0; j < results.length; j++) {
-      const result = results[j];
+    const results = await Promise.allSettled(
+      batch.map((s) => fetchFeed(s).then((n) => ({ source: s, count: n })))
+    );
+    for (const result of results) {
       if (result.status === "fulfilled") {
-        total += result.value;
-        console.log(`[feed] ${batch[j].name}: +${result.value} items`);
+        total += result.value.count;
+        console.log(`[feed] ${result.value.source.name}: +${result.value.count} items`);
       } else {
-        console.error(`[feed] ${batch[j].name}: failed —`, result.reason);
+        console.error(`[feed] fetch failed —`, result.reason);
       }
     }
   }

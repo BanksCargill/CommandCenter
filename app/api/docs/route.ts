@@ -18,8 +18,14 @@ export async function GET(request: NextRequest) {
   return NextResponse.json(all);
 }
 
+const MAX_DOC_BYTES = 5 * 1024 * 1024; // 5 MB
+
 export async function POST(request: NextRequest) {
-  const { title, content, tags, projectId } = await request.json();
+  const raw = await request.text();
+  if (raw.length > MAX_DOC_BYTES) {
+    return NextResponse.json({ error: "Request body too large (max 5 MB)" }, { status: 413 });
+  }
+  const { title, content, tags, projectId } = JSON.parse(raw);
   if (!title) return NextResponse.json({ error: "title is required" }, { status: 400 });
 
   const created = db

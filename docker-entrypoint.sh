@@ -18,7 +18,7 @@ trap 'kill -TERM $SERVER_PID' TERM INT
 echo "Waiting for server to start..."
 i=0
 while [ $i -lt 30 ]; do
-  if wget -qO/dev/null --post-data='' "http://localhost:3000/api/startup-revalidate" 2>/dev/null; then
+  if wget -qO/dev/null --post-data='' --header="X-Revalidate-Secret: ${REVALIDATE_SECRET:-}" "http://localhost:3000/api/startup-revalidate" 2>/dev/null; then
     echo "Server ready — cache revalidated."
     break
   fi

@@ -10,9 +10,12 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   news_feed_limit: "100",
 };
 
+// Map-based lookup avoids prototype-pollution risk on plain object key access.
+const DEFAULTS_MAP = new Map(Object.entries(SETTING_DEFAULTS));
+
 export function getSetting(key: string): string {
   const row = db.select().from(settings).where(eq(settings.key, key)).get();
-  return row?.value ?? SETTING_DEFAULTS[key] ?? "";
+  return row?.value ?? DEFAULTS_MAP.get(key) ?? "";
 }
 
 export function getSettingInt(key: string): number {

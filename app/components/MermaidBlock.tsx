@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import DOMPurify from "dompurify";
 
 interface Props {
   chart: string;
@@ -18,11 +19,14 @@ export default function MermaidBlock({ chart }: Props) {
       try {
         const { svg } = await mermaid.render(`mermaid-${id}`, chart);
         if (!cancelled && ref.current) {
-          ref.current.innerHTML = svg;
+          ref.current.innerHTML = DOMPurify.sanitize(svg, {
+            USE_PROFILES: { svg: true, svgFilters: true },
+          });
         }
       } catch (err) {
         if (!cancelled && ref.current) {
-          ref.current.innerHTML = `<pre class="text-red-400 text-xs p-2">${String(err)}</pre>`;
+          const safeErr = DOMPurify.sanitize(String(err));
+          ref.current.innerHTML = `<pre class="text-red-400 text-xs p-2">${safeErr}</pre>`;
         }
       }
     })();
