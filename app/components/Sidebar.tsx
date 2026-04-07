@@ -1,15 +1,16 @@
 "use client";
 
-import { Newspaper, BookOpen, KanbanSquare, Settings } from "lucide-react";
+import { Newspaper, BookOpen, KanbanSquare, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const modules = [
   { label: "News Feed", icon: Newspaper,     href: "/",         active: true },
   { label: "Projects",  icon: KanbanSquare,  href: "/projects", active: true },
-  { label: "Docs",      icon: BookOpen,      href: "/docs",     active: true },
+  { label: "Docs",       icon: BookOpen,     href: "/docs",     active: true },
+  { label: "Chelsea FC", icon: Trophy,       href: "/chelsea",  active: true },
   //{ label: "Memories",  icon: BrainCircuit,  href: "/memories", active: false },
-  { label: "Settings",  icon: Settings,      href: "/settings", active: true },
+  { label: "Settings",   icon: Settings,     href: "/settings", active: true },
 ];
 
 export default function Sidebar() {

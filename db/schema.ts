@@ -87,6 +87,22 @@ export const docs = sqliteTable("docs", {
   index("idx_docs_pinned").on(t.pinned),
 ]);
 
+export const chelseaMatches = sqliteTable("chelsea_matches", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  team: text("team").notNull().default("chelsea"), // "chelsea" | "england" | "usa" | "world_cup"
+  externalId: text("external_id").unique(), // football-data.org match ID for dedup
+  matchDate: integer("match_date", { mode: "timestamp" }).notNull(),
+  opponent: text("opponent").notNull(),
+  competition: text("competition").notNull(), // "Premier League" | "Champions League" | etc.
+  venue: text("venue", { enum: ["home", "away", "neutral"] }).notNull().default("home"),
+  result: text("result", { enum: ["win", "draw", "loss", "upcoming"] }).notNull().default("upcoming"),
+  score: text("score"), // "2-1", null if upcoming
+  notes: text("notes"),
+}, (t) => [
+  index("idx_chelsea_date").on(t.matchDate),
+  index("idx_chelsea_team").on(t.team),
+]);
+
 export const settings = sqliteTable("settings", {
   key: text("key").primaryKey(),
   value: text("value").notNull(),
@@ -108,3 +124,5 @@ export type NewProjectItem = typeof projectItems.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type Doc = typeof docs.$inferSelect;
 export type NewDoc = typeof docs.$inferInsert;
+export type ChelseaMatch = typeof chelseaMatches.$inferSelect;
+export type NewChelseaMatch = typeof chelseaMatches.$inferInsert;

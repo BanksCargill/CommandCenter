@@ -12,6 +12,9 @@ import {
   AlertCircle,
   Loader2,
   Info,
+  Eye,
+  EyeOff,
+  Key,
 } from "lucide-react";
 
 interface Stats {
@@ -26,6 +29,7 @@ interface Settings {
   digest_default_on: string;
   retention_days: string;
   news_feed_limit: string;
+  football_api_key: string;
 }
 
 interface Props {
@@ -76,7 +80,9 @@ export default function SettingsLanding({ initialSettings, initialStats }: Props
     digest_default_on: initialSettings.digest_default_on ?? "true",
     retention_days: initialSettings.retention_days ?? "30",
     news_feed_limit: initialSettings.news_feed_limit ?? "100",
+    football_api_key: initialSettings.football_api_key ?? "",
   });
+  const [showApiKey, setShowApiKey] = useState(false);
   // Stats are pre-loaded by the server page; only null during a manual Refresh failure
   const [stats, setStats] = useState<Stats | null>(initialStats);
   const [loadingStats, setLoadingStats] = useState(false);
@@ -86,6 +92,7 @@ export default function SettingsLanding({ initialSettings, initialStats }: Props
   const [digestOnSave, setDigestOnSaving, setDigestOnSaved, setDigestOnError] = useSaveState();
   const [retentionSave, setRetentionSaving, setRetentionSaved, setRetentionError] = useSaveState();
   const [feedLimitSave, setFeedLimitSaving, setFeedLimitSaved, setFeedLimitError] = useSaveState();
+  const [footballKeySave, setFootballKeySaving, setFootballKeySaved, setFootballKeyError] = useSaveState();
 
   const [purging, setPurging] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -308,6 +315,48 @@ export default function SettingsLanding({ initialSettings, initialStats }: Props
             Clear all news
           </button>
           {purgeMsg && <span className="text-xs text-gray-500">{purgeMsg}</span>}
+        </div>
+      </section>
+
+      {/* ── Integrations ──────────────────────────────────────────────── */}
+      <section className="space-y-5">
+        <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-500">Integrations</h2>
+
+        {/* Football API key */}
+        <div className="space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-2 text-sm text-gray-300">
+              <Key size={14} className="text-gray-500 shrink-0" />
+              <span>football-data.org API key</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <SaveIndicator state={footballKeySave} />
+              <div className="flex items-center">
+                <input
+                  type={showApiKey ? "text" : "password"}
+                  value={settings.football_api_key}
+                  onChange={(e) => setSettings((s) => ({ ...s, football_api_key: e.target.value }))}
+                  onBlur={() =>
+                    saveSetting("football_api_key", settings.football_api_key, setFootballKeySaving, setFootballKeySaved, setFootballKeyError)
+                  }
+                  placeholder="Paste key here"
+                  className="w-52 bg-gray-900 border border-gray-700 rounded-l px-2 py-1 text-sm text-gray-100 font-mono focus:outline-none focus:border-emerald-700"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowApiKey((v) => !v)}
+                  className="bg-gray-900 border border-l-0 border-gray-700 rounded-r px-2 py-1 text-gray-500 hover:text-gray-300 transition-colors"
+                  title={showApiKey ? "Hide key" : "Show key"}
+                >
+                  {showApiKey ? <EyeOff size={13} /> : <Eye size={13} />}
+                </button>
+              </div>
+            </div>
+          </div>
+          <p className="text-xs text-gray-600 pl-6">
+            Required for Chelsea / England / USA fixture sync and Premier League standings. Free tier available at{" "}
+            <span className="text-gray-500 font-mono">football-data.org</span>.
+          </p>
         </div>
       </section>
 

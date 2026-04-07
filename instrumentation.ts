@@ -62,5 +62,18 @@ export async function register() {
     });
 
     console.log("[cron] Feed scheduler registered (checks every hour, respects fetch_interval_hours setting)");
+
+    // Chelsea fixture sync — runs daily at 6am
+    const { fetchChelseaFixtures } = await import("./lib/football-fetcher");
+    cron.schedule("0 6 * * *", async () => {
+      console.log("[cron] Syncing Chelsea fixtures...");
+      const result = await fetchChelseaFixtures();
+      if (result.error) {
+        console.log(`[cron] Chelsea sync skipped: ${result.error}`);
+      } else {
+        console.log(`[cron] Chelsea fixtures: +${result.added} added, ${result.updated} updated`);
+      }
+    });
+    console.log("[cron] Chelsea fixture scheduler registered (daily at 6am)");
   }
 }

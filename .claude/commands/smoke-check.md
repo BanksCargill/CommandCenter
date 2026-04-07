@@ -27,6 +27,9 @@ Current routes to verify:
 | `/api/settings` | GET | object with known keys (`fetch_interval_hours`, `digest_size`, etc.) |
 | `/api/settings/stats` | GET | object with `total`, `oldest`, `newest` or similar |
 | `/api/docs` | GET | array of doc objects with `id`, `title`, `pinned` |
+| `/api/chelsea/matches?team=chelsea` | GET | array of match objects with `id`, `opponent`, `result` |
+| `/api/chelsea/standings` | GET | 200 with standings array, or 403 `{ error: "no_api_key" }` if key not set |
+| `/api/chelsea/sync?team=chelsea` | POST | `{ added, updated }` or `{ error: "no_api_key" }` |
 
 For each: log PASS or FAIL with the HTTP status and a one-line note on the shape.
 
@@ -38,6 +41,7 @@ curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/projects
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/settings
 curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/docs
+curl -s -o /dev/null -w "%{http_code}" http://localhost:3000/chelsea
 ```
 
 **Step 4 — Report results**

@@ -7,13 +7,14 @@ import type { FeedSource } from "@/db/schema";
 
 interface Props {
   initialSources: FeedSource[];
+  defaultTags?: string;
 }
 
-export default function FeedSources({ initialSources }: Props) {
+export default function FeedSources({ initialSources, defaultTags = "" }: Props) {
   const router = useRouter();
   const [sources, setSources] = useState(initialSources);
   const [adding, setAdding] = useState(false);
-  const [form, setForm] = useState({ name: "", url: "", topicTags: "" });
+  const [form, setForm] = useState({ name: "", url: "", topicTags: defaultTags });
   const [refreshing, setRefreshing] = useState(false);
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
@@ -49,7 +50,7 @@ export default function FeedSources({ initialSources }: Props) {
     });
     const created = await res.json();
     setSources((prev) => [...prev, created]);
-    setForm({ name: "", url: "", topicTags: "" });
+    setForm({ name: "", url: "", topicTags: defaultTags });
     setAdding(false);
   }
 

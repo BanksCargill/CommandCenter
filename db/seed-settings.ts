@@ -8,6 +8,7 @@ const db = new Database(path.join(process.cwd(), "db", "command-center.db"));
 
 const settings: Array<{ key: string; value: string }> = [
   { key: "fetch_interval_hours", value: "3" },
+  { key: "football_api_key", value: "b334173b811a4401ac7115fdc85f7ff2" },
   { key: "news_feed_limit", value: "100" },
   { key: "retention_days", value: "7" }
 ];

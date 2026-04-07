@@ -8,6 +8,7 @@ export const SETTING_DEFAULTS: Record<string, string> = {
   digest_default_on: "true",
   retention_days: "30",
   news_feed_limit: "100",
+  football_api_key: "",
 };
 
 // Map-based lookup avoids prototype-pollution risk on plain object key access.

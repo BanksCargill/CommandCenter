@@ -25,6 +25,7 @@ export async function POST(request: NextRequest) {
   revalidatePath("/");
   revalidatePath("/projects");
   revalidatePath("/docs");
-  console.log("[startup] Revalidated /, /projects, /docs");
+  revalidatePath("/chelsea");
+  console.log("[startup] Revalidated /, /projects, /docs, /chelsea");
   return NextResponse.json({ ok: true });
 }

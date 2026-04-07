@@ -74,6 +74,43 @@ const seeds: Array<{
     adapter: "lobsters",
     topicTags: "tech,programming",
     active: true,
+  },
+  {
+    name: "Chelsea FC — BBC Sport",
+    url: "https://feeds.bbci.co.uk/sport/football/teams/chelsea/rss.xml",
+    type: "rss" as "rss" | "api",
+    topicTags: "chelsea",
+    active: true,
+  },
+  {
+    name: "r/chelseafc",
+    url: "https://www.reddit.com/r/chelseafc.json",
+    type: "api" as "rss" | "api",
+    adapter: "reddit",
+    topicTags: "chelsea",
+    active: true,
+  },
+  {
+    name: "Chelsea FC YouTube",
+    url: "https://www.youtube.com/feeds/videos.xml?channel_id=UCdN2g8KBhCMFXPRgTXz-4sQ",
+    type: "rss" as "rss" | "api",
+    topicTags: "chelsea,highlights",
+    active: true,
+  },
+  {
+    name: "England Football — BBC Sport",
+    url: "https://feeds.bbci.co.uk/sport/football/teams/england/rss.xml",
+    type: "rss" as "rss" | "api",
+    topicTags: "england",
+    active: true,
+  },
+  {
+    name: "r/ussoccer",
+    url: "https://www.reddit.com/r/ussoccer.json",
+    type: "api" as "rss" | "api",
+    adapter: "reddit",
+    topicTags: "usa",
+    active: true,
   }
 ];
 

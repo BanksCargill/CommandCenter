@@ -37,7 +37,7 @@ export default function SettingsPage() {
       name: s.name,
       active: s.active,
       itemCount: row?.itemCount ?? 0,
-      lastFetchedAt: row?.lastFetchedAt ?? null,
+      lastFetchedAt: row?.lastFetchedAt ? row.lastFetchedAt.toISOString() : null,
     };
   });
 

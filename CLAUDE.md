@@ -136,6 +136,19 @@ app/components/Sidebar.tsx         ← add one entry to the `modules` array (act
 - **CLI:** `npx tsx scripts/docs.ts [get|list|patch|sync|push]` — no server required, direct Drizzle access
 - **Write-through helper:** `lib/doc-files.ts` — `writeDocFile`, `deleteDocFile` used by API routes
 
+### Chelsea FC `/chelsea`
+- Landing: `app/chelsea/page.tsx` → `app/components/ChelseaLanding.tsx` — five tabs: Chelsea News Feed, Schedule, Champions League, International, World Cup
+- Schedule sub-component: `app/components/ChelseaSchedule.tsx` — upcoming fixtures + results, sync button, manual add; `defaultCompetition` prop pre-fills the add form
+- Standings: `app/components/PLStandings.tsx` — PL standings table rendered to the right of the Schedule tab; fetches `/api/chelsea/standings` on mount; Chelsea row highlighted blue
+- API: `app/api/chelsea/matches/route.ts` (GET `?team=` filter + POST), `app/api/chelsea/matches/[id]/route.ts` (PATCH + DELETE), `app/api/chelsea/sync/route.ts` (POST `?team=` — triggers football-data.org fetch), `app/api/chelsea/standings/route.ts` (GET, cached 1 hour — calls `/competitions/PL/standings`)
+- Feed fetcher: `lib/football-fetcher.ts` — exports `fetchChelseaFixtures()`, `fetchEnglandFixtures()`, `fetchUsaFixtures()`, `fetchUCLFixtures()`, `fetchWorldCupFixtures()`; `CHELSEA_TEAM_ID = 61` exported; football-data.org v4 API
+  - Free tier: Chelsea PL, England, USA national teams, World Cup
+  - Paid plan required: Champions League (`/competitions/CL/matches`)
+  - UCL/World Cup finished matches stored as `result="draw"` (neutral competition — home-team win/loss is meaningless; score tells the story)
+- Cron: `instrumentation.ts` — daily at 6am, calls `fetchChelseaFixtures()`
+- News from `news_items` via `feed_sources.topic_tags` (`chelsea`, `england`, `usa`); FeedSources sidebar (`app/components/FeedSources.tsx`) reused on the right of news-type tabs, filtered per tab by topic tag
+- **API key:** Set `football_api_key` in Settings to enable fixture sync and PL standings
+
 ### Memories `/memories` ← STUBBED (disabled in Sidebar)
 
 ---
@@ -155,11 +168,12 @@ app/components/Sidebar.tsx         ← add one entry to the `modules` array (act
 | `projects` | id, name, description, archived | |
 | `settings` | key (PK), value, updated_at | key-value store |
 | `docs` | id, title, content, tags, project_id, pinned, created_at, updated_at | markdown documents; `project_id` FK nullable (`set null` on project delete); `tags` comma-separated |
+| `chelsea_matches` | id, team, external_id, match_date, opponent, competition, venue, result, score, notes | `team` = chelsea\|england\|usa\|world_cup\|ucl (default: chelsea); `external_id` = football-data.org match ID for dedup; `result` = win\|draw\|loss\|upcoming |
 | `memories` | id, content, tags, source | unused/future |
 
 **Inferred types** exported from `db/schema.ts`:
 ```typescript
-import type { Doc, FeedSource, NewsItem, Project, ProjectItem, Setting } from "@/db/schema";
+import type { ChelseaMatch, Doc, FeedSource, NewsItem, Project, ProjectItem, Setting } from "@/db/schema";
 ```
 
 **Migrations:** `npx drizzle-kit generate` (creates SQL in `drizzle/`), then `npx drizzle-kit migrate` (applies to DB).
@@ -233,7 +247,9 @@ setSetting("last_fetched_at", iso)   // upserts
 getAllSettings()                     // → Record<string, string> merged with defaults
 ```
 
-Current settings keys: `fetch_interval_hours`, `digest_size`, `digest_default_on`, `retention_days`, `last_fetched_at`, `news_feed_limit`
+Current settings keys: `fetch_interval_hours`, `digest_size`, `digest_default_on`, `retention_days`, `last_fetched_at`, `news_feed_limit`, `football_api_key`
+
+- `football_api_key` — Enables Chelsea/England/USA/UCL/World Cup fixture sync (via `POST /api/chelsea/sync?team=<team>`) and PL standings fetch (`GET /api/chelsea/standings`). Free tier from football-data.org covers Chelsea, England, USA, and World Cup. Champions League requires a paid plan.
 
 ---
 
